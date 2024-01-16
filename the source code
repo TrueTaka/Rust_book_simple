@@ -1,0 +1,651 @@
+#NoTrayIcon
+#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
+#AutoIt3Wrapper_Icon=..\..\..\..\..\..\..\..\Downloads\!rusdesk\RustDesk_me\icon.ico
+#AutoIt3Wrapper_UseUpx=y
+#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
+#include <EditConstants.au3>
+#include <GuiConstantsEx.au3>
+#include <WindowsConstants.au3>
+#include <StaticConstants.au3>
+#include <ButtonConstants.au3>
+#Include <File.au3>
+#Include <GuiListView.au3>
+#include <Date.au3>
+#include <SendMessage.au3>
+
+Opt("GUIResizeMode", 802)
+
+$SC_DRAGMOVE = 0xF012
+
+Dim $data_Location = @ScriptDir & "\backup\"
+Dim $num = 0, $Input[10], $data_[10], $COAInput[10]
+Dim $File_Location = @ScriptDir & "\Address.ini"
+Dim $num = 0, $Input_[10], $data_[10]
+
+
+;;;conect
+; Global vars.
+Global $GUI_ENABLE_DEFBUTTON = 576
+$IDNumber = ""
+$PWNumber = ""
+$ConnectionEstablished = False
+$HZ = 0
+
+
+$Btn1 =		IniRead( @ScriptDir & "\Bin\viewer.ini", "Button", "Button1", "" )
+$Btn2 =		IniRead( @ScriptDir & "\Bin\viewer.ini", "Button", "Button2", "" )
+$Rustdesk = IniRead( @ScriptDir & "\Bin\viewer.ini", "rustdesk.exe", "rustdesk", "" )
+
+
+$Logo_icon = @TempDir & "\addressbook.ico"
+
+$add_icon = @TempDir & "\add.ico"
+
+$dell_icon = @TempDir & "\dell.ico"
+
+$exel_icon = @TempDir & "\exel.ico"
+
+$clear_icon = @TempDir & "\clear.ico"
+
+
+$GUI = GUICreate("Viewer Rustdesk 0.2", 275, 400)
+$EX = GUICtrlCreateButton(ChrW('0x25BA') , 245, 9, 25, 43)
+GUICtrlSetFont (-1,-1, -1, -1, 'Arial')
+
+$Combo1 = GUICtrlCreateCombo("", 7, 16, 210, 39)
+GUICtrlSetFont( -1, 20, 800, 0, "MS Sans Serif" )
+;~ GUICtrlSetTip(-1, 'if id is more than 5 characters, the connection will be via chunkvnc', 'ID, / IP', 1, 3)
+$Combo2 = GUICtrlCreateCombo("", 7, 66, 210, 39)
+GUICtrlSetFont( -1, 20, 800, 0, "MS Sans Serif" )
+$Input20 = GUICtrlCreateInput("", 1, 1, 1, 1)  ;pass
+$Input21 = GUICtrlCreateInput("", 1, 1, 1, 1)  ;port
+
+$Button1 = GUICtrlCreateButton($Btn1, 60, 120, 120, 39, $BS_DEFPUSHBUTTON)
+GUICtrlSetFont( -1, 14, 800, 0, "MS Sans Serif" )
+GUICtrlSetTip(-1, 'Ammyyadmin : id ')
+$Button17 = GUICtrlCreateButton($Btn2, 60, 190, 120, 39, $WS_GROUP)
+GUICtrlSetFont( -1, 14, 800, 0, "MS Sans Serif" )
+GUICtrlSetTip(-1, 'Add Auto Contakt ')
+;~ $Button18 = GUICtrlCreateButton("RDP", 80, 260, 100, 39, $WS_GROUP)
+;~ GUICtrlSetFont( -1, 14, 800, 0, "MS Sans Serif" )
+;~ GUICtrlSetTip(-1, 'mstsc.exe /v: repeater : id ')
+
+; Create right-click context menu for Combo1.
+$ContextMenu1 = 		GUICtrlCreateContextMenu( $Combo1 )
+;~ $ContextMenuHistory1 = 	GUICtrlCreateMenuItem( "Clear History", $ContextMenu1 )
+
+
+; Create right-click context menu for $Button1.
+$ContextMenu1 = 		GUICtrlCreateContextMenu( $Button1 )
+;~ $ContextMenuMode0 = 	GUICtrlCreateMenuItem( "Connect serv2", $ContextMenu1 )
+$ContextMenuBlank3 = 	GUICtrlCreateMenuItem( "", $ContextMenu1 )
+$ContextMenuMode1 = 	GUICtrlCreateMenuItem( "Add contact", $ContextMenu1 )
+$ContextMenuBlank2 = 	GUICtrlCreateMenuItem( "", $ContextMenu1 )
+;~ $ContextMenuMode4 = 	GUICtrlCreateMenuItem( "AmmyAdmin", $ContextMenu1 )
+;~ $ContextMenuVieweronly = 	GUICtrlCreateMenuItem( "Viewer Only", $ContextMenu1 )
+;~ $ContextMenuHistory1 = 	GUICtrlCreateMenuItem( "Clear History", $ContextMenu1 )
+$ContextMenuBlank1 = 	GUICtrlCreateMenuItem( "", $ContextMenu1 )
+;~ $ContextMenuAbout1 = 	GUICtrlCreateMenuItem( "Setting", $ContextMenu1 )
+
+;~ ; Fill Combo1 and show current repeater address.
+;~ GUICtrlSetData( $Combo1, $IDList )
+;~ GUICtrlSetData( $Combo2, $IDListPW )
+
+
+
+;;address list
+$Label_10 = GUICtrlCreateLabel("Customer #: " & $num, 1, 1, 1, 1, BitOR($SS_SUNKEN, $SS_CENTER), $WS_EX_TRANSPARENT )
+;~ $Label2 = GUICtrlCreateLabel("ADDRESS BOOK", 8, 8, 190, 28)
+;~ GUICtrlSetFont(-1, 16, 400, 0, "MS Sans Serif")
+$Button3 = GUICtrlCreateButton("", 753, 65, 49, 41, $BS_ICON)
+GUICtrlSetImage(-1, $add_icon )
+GUICtrlSetTip(-1, 'add user')
+$Button9 = GUICtrlCreateButton("", 753, 110, 49, 41, $BS_ICON)
+GUICtrlSetImage(-1, $dell_icon )
+GUICtrlSetTip(-1, 'dell user')
+$Button4 = GUICtrlCreateButton("<--", 753, 20, 49, 41, $WS_GROUP)
+$Button7 = GUICtrlCreateButton("", 753, 180, 49, 41, $BS_ICON)
+GUICtrlSetImage(-1, $exel_icon )
+GUICtrlSetTip(-1, 'export exel')
+
+$ContextMenuHistory1 = GUICtrlCreateButton("", 753, 330, 49, 41, $BS_ICON)
+GUICtrlSetImage(-1, $clear_icon )
+GUICtrlSetTip(-1, 'clear all')
+
+$Listview = GUICtrlCreateListView("#|Name|ID \ IP|Password|Note|Port|Date", 300, 20, 450, 360)
+
+GUICtrlSendMsg($listview, $LVM_Deleteallitems, 0, 0)  ;;;отчищает список перед отображением
+adressbook()
+GUISetState()
+
+
+
+
+;;;;;add windows
+$Form3 = GUICreate("Add User", 413, 310, 388, 259,$WS_BORDER, -1, $GUI)
+$Input_[2] = GUICtrlCreateInput("", 24, 40, 113, 21)
+$Input_[1] = GUICtrlCreateInput("", 168, 40, 153, 21)
+$Input_[3] = GUICtrlCreateInput("", 170, 96, 113, 21)  ;pass
+__SetPasswordChar($Form3,GUICtrlGetHandle($Input_[3]),-1,9679)
+$Checkbox11 = GUICtrlCreateCheckbox("show password", 168, 123, 145, 17)
+$Input_[4] = GUICtrlCreateInput("", 24, 180, 305, 60)  ;note
+$Input_[9] = GUICtrlCreateInput("5900", 24, 96, 113, 21)   ;port
+$Button5 = GUICtrlCreateButton("Save", 200, 248, 89, 33, $WS_GROUP)
+$Button6 = GUICtrlCreateButton("Cancel", 304, 248, 89, 33, $WS_GROUP)
+$Labe20 = GUICtrlCreateLabel("ID \ IP", 24, 8, 36, 17)
+$Labe21 = GUICtrlCreateLabel("Name", 168, 8, 36, 17)
+$Labe23 = GUICtrlCreateLabel("Port only VNC Viewer", 24, 72, 117, 17)
+$Labe29 = GUICtrlCreateLabel("Password", 168, 72, 137, 17)
+;~ $Labe24 = GUICtrlCreateLabel("Note", 24, 148, 116, 17)
+$Input_18 = GUICtrlCreateInput("", 24, 143, 113, 21)   ;date
+;~ GUISetState(@SW_HIDE)
+
+;;;;;viewer windows
+$Form4 = GUICreate("Viewe User", 413, 310, 388, 259,$WS_BORDER, -1, $GUI)
+$Input_[6] = GUICtrlCreateInput("", 24, 40, 113, 21)
+$Input_[5] = GUICtrlCreateInput("", 168, 40, 153, 21)
+$Input_[7] = GUICtrlCreateInput("", 170, 96, 113, 21)  ;pass
+__SetPasswordChar($Form4,GUICtrlGetHandle($Input_[7]),-1,9679)
+$Checkbox12 = GUICtrlCreateCheckbox("show password", 168, 123, 145, 17)
+$Input_[8] = GUICtrlCreateInput("",  24, 180, 305, 60) ;note
+$Input_11 = GUICtrlCreateInput("", 24, 96, 113, 21)   ;port
+$Button19 = GUICtrlCreateButton("Save", 200, 248, 89, 33, $WS_GROUP)
+$Button8 = GUICtrlCreateButton("Cancel", 304, 248, 89, 33, $WS_GROUP)
+$Labe25 = GUICtrlCreateLabel("ID \ IP", 24, 8, 36, 17)
+$Labe26 = GUICtrlCreateLabel("Name", 168, 8, 36, 17)
+$Labe30 = GUICtrlCreateLabel("Port only VNC Viewer", 24, 72, 117, 17)
+$Labe27 = GUICtrlCreateLabel("Password", 168, 72, 137, 17)
+;~ $Labe28 = GUICtrlCreateLabel("Note", 24, 148, 116, 17)
+$Input_17 = GUICtrlCreateInput("", 24, 143, 113, 21)   ;date
+;~ GUISetState(@SW_HIDE)
+
+
+;;;mouse enable
+GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
+
+
+While 1
+    $Msg = GUIGetMsg()
+    Switch $Msg
+		Case $EX
+			$GuiPos = WinGetPos($Gui)
+			If $GuiPos[2] > 250 And $GuiPos[2] < 300 Then
+				WinMove($Gui, "", $GuiPos[0], $GuiPos[1], $GuiPos[2]+535, $GuiPos[3])
+				GUICtrlSetData($EX,ChrW ('0x25C4'))
+			Else
+				WinMove($Gui, "", $GuiPos[0], $GuiPos[1], $GuiPos[2]-535, $GuiPos[3])
+				GUICtrlSetData($EX,ChrW ('0x25BA'))
+			EndIf
+        Case -3
+            Exit
+
+Case $GUI_EVENT_PRIMARYDOWN ; событие нажатия мыши
+			_SendMessage($GUI, $WM_SYSCOMMAND, $SC_DRAGMOVE, 0) ; для перемещения окна за само окно
+
+;;;;;;;;;;;;;;;;;;;;;  password
+ Case $Checkbox11
+            If BitAND(GUICtrlRead($Checkbox11),$gui_checked)=$gui_checked Then
+                __SetPasswordChar($Form3,GUICtrlGetHandle($Input_[3]),-1,0)
+            ElseIf BitAND(GUICtrlRead($Checkbox11),$gui_unchecked)=$gui_unchecked Then
+                __SetPasswordChar($Form3,GUICtrlGetHandle($Input_[3]),-1,9679)
+            EndIf
+
+ Case $Checkbox12
+            If BitAND(GUICtrlRead($Checkbox12),$gui_checked)=$gui_checked Then
+                __SetPasswordChar($Form4,GUICtrlGetHandle($Input_[7]),-1,0)
+            ElseIf BitAND(GUICtrlRead($Checkbox12),$gui_unchecked)=$gui_unchecked Then
+                __SetPasswordChar($Form4,GUICtrlGetHandle($Input_[7]),-1,9679)
+            EndIf
+;;;;;;;;;;;;;;;;;;;;;
+
+; Connect
+		Case $Button1
+
+RustDesk()
+;~
+
+;;;add adress book
+;~ Add_CustomerAuto()           ;;;;;;;;;;;;;;;;;;;;;;;Add_CustomerAuto()
+GUICtrlSendMsg($listview, $LVM_Deleteallitems, 0, 0)  ;;;отчищает список перед отображением
+;~ GUISetState(@SW_SHOW, $Form2)
+adressbook()
+;~ GUICtrlSetState ($Button2,$GUI_DISABLE)   ;;;выключает кнопку
+GUICtrlSetData( $Combo1, "" )
+GUICtrlSetData( $Combo2, "" )
+
+
+; Clear history.
+		Case $ContextMenuHistory1
+Clear()
+
+
+Case $Button17
+RustDesknAutoAdd()
+
+
+;;выбрать
+ Case $Button4
+
+            Local $s_indices =  _GUICtrlListView_GetSelectedIndices($Listview)
+            Get_CNumber($s_indices + 1)
+;~             GUISetState(@SW_HIDE, $Form2)
+            _GUICtrlListView_DeleteAllItems($Listview)
+
+GUICtrlSendMsg($listview, $LVM_Deleteallitems, 0, 0)  ;;;отчищает список перед отображением
+adressbook()
+;~ GUICtrlSetState ($Button2,$GUI_ENABLE)   ;;;включает кнопку
+
+;;удалить контакт
+ Case $Button9
+
+            Local $s_indices =  _GUICtrlListView_GetSelectedIndices($Listview)
+            ;Get_dell($s_indices + 1)
+            Remove_Customer()
+			GUISetState(@SW_HIDE, $Form3)
+
+			_GUICtrlListView_DeleteAllItems($Listview)
+
+GUICtrlSendMsg($listview, $LVM_Deleteallitems, 0, 0)  ;;;отчищает список перед отображением
+			adressbook()
+;~ 			GUISetState(@SW_SHOW, $Form2)
+
+
+;;;;;ardess book open
+;~ 	Case $Button2
+;~             adressbook()
+;~ 			GUICtrlSetState ($Button2,$GUI_DISABLE)   ;;;выключает кнопку
+;;;;;add open
+	Case $Button3
+            addwindows()
+
+;;;;;add open contecst menu
+	Case $ContextMenuMode1
+            addwindows2()
+
+
+;~ ;;;;;ammyyadmin
+;~ 	Case $ContextMenuMode4
+;~             ammyadmin()
+
+
+;;;;Cansel Form3
+Case $Button6
+GUISetState(@SW_HIDE, $Form3)
+GUICtrlSendMsg($listview, $LVM_Deleteallitems, 0, 0)  ;;;отчищает список перед отображением
+adressbook()
+;~ GUISetState(@SW_SHOW, $Form2)
+;~ GUICtrlSetState ($Button2,$GUI_DISABLE)   ;;;выключает кнопку
+
+Case $Button8
+GUISetState(@SW_HIDE, $Form4)
+;~ GUISetState(@SW_SHOW, $Form2)
+
+;;update button
+Case $Button19
+UpDate_Customer()
+GUICtrlSendMsg($listview, $LVM_Deleteallitems, 0, 0)  ;;;отчищает список перед отображением
+;~ GUISetState(@SW_SHOW, $Form2)
+adressbook()
+;~ GUICtrlSetState ($Button2,$GUI_DISABLE)   ;;;выключает кнопку
+
+
+;;;Save button
+Case $Button5
+			Add_Customer()
+GUICtrlSendMsg($listview, $LVM_Deleteallitems, 0, 0)  ;;;отчищает список перед отображением
+;~ GUISetState(@SW_SHOW, $Form2)
+adressbook()
+;~ GUICtrlSetState ($Button2,$GUI_DISABLE)   ;;;выключает кнопку
+
+
+		Case $Button7
+			Open_Office()
+
+
+	EndSwitch
+WEnd
+
+
+
+;;;;func ardess edit
+Func editbook()
+GUISetState(@SW_SHOW, $Form4 )
+
+ $length = _FileCountLines($File_Location)
+    For $x = 1 To $length - 1
+        $temp_file = IniRead($File_Location, "Address", $x, "Not Found")
+        If $temp_file = "Not Found" Then Return
+        $temp_split = StringSplit($temp_file, ",")
+       ; GUICtrlCreateListViewItem( $x & "|" & $temp_split[1] & "|" & $temp_split[2] & "|" & $temp_split[3] & "|" & $temp_split[4] & "|" ,$listview)
+
+
+    GUISetState( @SW_SHOW, $Form3 )
+GUICtrlSetData ($Input_[2], $temp_split[1]) ; берет параметр из файла
+GUICtrlSetData ($Input_[1], $temp_split[2]) ; берет параметр из файла
+GUICtrlSetData ($Input_[3], $temp_split[3]) ; берет параметр из файла
+GUICtrlSetData ($Input_[4], $temp_split[4]) ; берет параметр из файла
+GUICtrlSetData ($Input_11, $temp_split[5]) ; берет параметр из файла port
+GUICtrlSetData ($Input_17, $temp_split[6]) ; берет параметр из файла date
+
+
+
+
+Next
+
+EndFunc
+
+
+
+
+;;;;func ardess book open
+Func adressbook()
+;~ GUISetState(@SW_SHOW, $Form2 )
+
+ $length = _FileCountLines($File_Location)
+    For $x = 1 To $length - 1
+        $temp_file = IniRead($File_Location, "Address", $x, "Not Found")
+        If $temp_file = "Not Found" Then Return
+        $temp_split = StringSplit($temp_file, ",")
+;~         GUICtrlCreateListViewItem( $x & "|" & $temp_split[1] & "|" & $temp_split[2] & "|" & $temp_split[3] & "|" & $temp_split[4] & "|" ,$listview)
+    GUICtrlCreateListViewItem( $x & "|" & $temp_split[1] & "|" & $temp_split[2] & "|" & "*****" & "|" & $temp_split[4] & "|"  & $temp_split[5] & "|" & $temp_split[6] & "|" ,$listview)
+	Next
+
+EndFunc
+
+
+;;;; save button
+Func Add_Customer()
+    $length = _FileCountLines($File_Location)
+    IniWrite($File_Location, "Address", $length, GUICtrlRead($Input_[1]) &","& GUICtrlRead($Input_[2])&","& GUICtrlRead($Input_[3])&","& GUICtrlRead($Input_[4])&","& GUICtrlRead($Input_[9]) & "," & _DateTimeFormat( _NowCalc(),2) )
+    ;GUICtrlSetData($Label_10, "Customer #: " & $length)
+
+GUISetState(@SW_HIDE, $Form3)
+
+
+EndFunc
+
+
+;;;; save addres auto to connetc button
+Func Add_CustomerAuto()
+    $length = _FileCountLines($File_Location)
+    IniWrite($File_Location, "Address", $length, _NowTime() &","& GUICtrlRead($Combo1)&","& GUICtrlRead($Combo2)&","& GUICtrlRead($Input_[4])&","& GUICtrlRead($Input_[9]) & "," & _DateTimeFormat( _NowCalc(),2))
+    ;GUICtrlSetData($Label_10, "Customer #: " & $length)
+
+
+
+EndFunc
+
+
+;;;;add wimdows open
+Func addwindows()
+GUISetState(@SW_SHOW, $Form3 )
+EndFunc
+
+;;;;add wimdows open
+Func addwindows2()
+GUISetState(@SW_SHOW, $Form3 )
+GUICtrlSetData ($Input_[2], GUICtrlRead($Combo1))
+GUICtrlSetData ($Input_[3], GUICtrlRead($Combo2))
+EndFunc
+
+
+;;;создает файл базы контактов
+Func Set_Ini()
+    FileWriteLine($File_Location, "[Address]")
+    FileWriteLine($File_Location, "[password]")
+    FileWriteLine($File_Location, "[Address2]")
+    FileWriteLine($File_Location, "3=David Jones,192.168.0.192.168.0.20,pass3,ip!!!")
+EndFunc ;==>Set_Ini
+
+
+
+
+
+;;;export to exel
+Func Open_Office()
+    FileDelete(@ScriptDir & "Address.bak")
+    FileDelete(@ScriptDir & "Office.csv")
+    FileCopy($File_Location, @ScriptDir & "\backup\" & "Address.bak", 1)
+    $length = _FileCountLines(@ScriptDir & "\backup\" & "Address.bak")
+    $Rfile = FileOpen(@ScriptDir & "\backup\" & "Address.bak", 0)
+    $Wfile = FileOpen(@ScriptDir & "\backup\" & "Office.csv", 2)
+    For $x = 2 To $length ; - 1
+        $line = FileReadLine($Rfile, $x)
+        If @error = -1 Then ExitLoop
+        $line_pos = StringInStr($line, "=")
+        FileWriteLine($Wfile, StringTrimLeft($line, $line_pos))
+    Next
+    FileClose($Rfile)
+    FileClose($Wfile)
+    $Off_loc = FileGetShortName(@ScriptDir & "\backup\" & "Office.csv")
+    Run(@ComSpec & " /c Start " & $Off_loc, "", @SW_HIDE)
+EndFunc
+
+
+
+Func Get_CNumber($x)
+    $temp_file = IniRead($File_Location, "Address", $x, "Not Found")
+    If $temp_file = "Not Found" Then
+        MsgBox(262208, "Sorry...", "No Customer Found/Selected...   ", 1)
+        Return
+    EndIf
+    $temp_split = StringSplit($temp_file, ",")
+    For $t = 1 To $temp_split[0] - 1
+        GUICtrlSetData($Input[$t], $temp_split[$t])                    ;;;;;;;;;;!!!
+        $num = $x
+    Next
+    GUICtrlSetData($Combo1, $temp_split[2])
+	GUICtrlSetData($Combo2, $temp_split[3])
+;~ 	GUICtrlSetData($Input20, $temp_split[3])
+GUICtrlSetData($Label_10, "Customer #: " & $num)                        ;;;;;;;;;!!!!
+    Return
+EndFunc   ;==>Get_CNumber
+
+
+
+Func WM_NOTIFY($hWnd, $imsg, $wParam, $lParam)
+    #forceref $hWnd, $iMsg, $wParam
+    Local $hWndFrom, $iIDFrom, $iCode, $tNMHDR, $tInfo,$text
+    $tNMHDR = DllStructCreate($tagNMHDR, $lParam)
+    $iIDFrom = DllStructGetData($tNMHDR, "IDFrom")
+    $iCode = DllStructGetData($tNMHDR, "Code")
+    Switch $iIDFrom
+        Case $ListView
+            Switch $iCode
+                Case $NM_DBLCLK
+                   $tInfo = DllStructCreate($tagNMITEMACTIVATE, $lParam)
+                    $text= _GUICtrlListView_GetItemText($ListView, DllStructGetData($tInfo, "Index"))
+                  ; ; GUICtrlSetData($Combo1,$text)
+
+
+			  $temp_file = IniRead($File_Location, "Address", $text, "Not Found")
+
+    $temp_split = StringSplit($temp_file, ",")
+    For $t = 1 To $temp_split[0] - 1
+
+        $num = $text
+    Next
+  	;;игнор ошибки
+If Not @error Then
+
+    GUICtrlSetData($Combo1, $temp_split[2])
+	 GUICtrlSetData($Combo2, $temp_split[3])
+	GUICtrlSetData($Input20, $temp_split[3])
+	GUICtrlSetData($Input21, $temp_split[5])
+	Else
+	noerror()
+EndIf
+
+    Return
+
+			    Case $NM_RCLICK ; правый клик мышкой по пункту
+                    $tInfo = DllStructCreate($tagNMITEMACTIVATE, $lParam)
+					$text= _GUICtrlListView_GetItemText($ListView, DllStructGetData($tInfo, "Index"))
+  $temp_file = IniRead($File_Location, "Address", $text, "Not Found")
+
+    $temp_split = StringSplit($temp_file, ",")
+
+
+For $t = 1 To $temp_split[0] - 1
+
+$num = $text
+Next
+
+;;игнор ошибки
+If Not @error Then
+
+Local $s_indices =  _GUICtrlListView_GetSelectedIndices($listview)
+            Get_CNumber($s_indices + 1)
+
+
+GUICtrlSetData ($Input_[6], $temp_split[2]) ; берет параметр из файла
+GUICtrlSetData ($Input_[5], $temp_split[1]) ; берет параметр из файла
+GUICtrlSetData ($Input_[7], $temp_split[3]) ; берет параметр из файла pass
+GUICtrlSetData ($Input_[8], $temp_split[4]) ; берет параметр из файла
+GUICtrlSetData ($Input_11, $temp_split[5]) ; берет параметр из файла
+GUICtrlSetData ($Input_17, $temp_split[6]) ; берет параметр из файла Дата date
+GUISetState( @SW_SHOW, $Form4 )
+ Return
+
+ 	Else
+	noerror()
+EndIf
+			EndSwitch
+    EndSwitch
+    Return $GUI_RUNDEFMSG
+EndFunc   ;==>WM_NOTIFY
+
+
+
+
+Func Close_COA()
+;~     GUISetState( @SW_HIDE, $Form5 )
+EndFunc
+
+Func Remove_Customer()
+
+    $num = ($s_indices +1)
+    IniWrite($File_Location, "Address", $num, ",,,,")
+
+    for $x = 1 to 4
+
+    Next
+
+    Clear_List()
+
+    MsgBox(262208, "Great...", "User Removed...   ", 1)
+EndFunc
+
+Func Clear_List()
+    FileDelete($data_Location & "Address.bak")
+    FileDelete(@TempDir & "\new.ini")
+    FileCopy($File_Location, $data_Location & "Address.bak", 1)
+    FileWriteLine(@TempDir & "\new.ini", "[Address]")
+    $t = 0
+    $length = _FileCountLines($File_Location)
+    For $x = 1 To $length - 1
+        $temp_file = IniRead($File_Location, "Address", $x, "Not Found")
+        If $temp_file = "Not Found" Then Return
+        $temp_split = StringSplit($temp_file, ",")
+        If $temp_split[1] = "" Then ContinueLoop
+        $t = $t + 1
+       ; IniWrite(@TempDir & "\new.ini", "Address", $t, $temp_split[1] & "," & $temp_split[2] & "," & $temp_split[3] & "," & $temp_split[4] & "," & $temp_split[5] & "," & $temp_split[6] & "," & $temp_split[7] & "," & $temp_split[8])
+IniWrite(@TempDir & "\new.ini", "Address", $t, $temp_split[1] & "," & $temp_split[2] & "," & $temp_split[3] & "," & $temp_split[4] & "," & $temp_split[5] & "," & $temp_split[6])
+
+	Next
+    FileCopy(@TempDir & "\new.ini", $File_Location, 1)
+EndFunc
+
+Func noerror()
+	MsgBox(4096, "error", "select the contact", 10)
+EndFunc
+
+Func UpDate_Customer()
+
+    $num = StringTrimLeft(GUICtrlRead($Label_10), 12)
+$length = _FileCountLines($File_Location)
+		IniWrite($File_Location, "Address", $num, GUICtrlRead($Input_[5]) &","& GUICtrlRead($Input_[6])&","& GUICtrlRead($Input_[7])&","& GUICtrlRead($Input_[8]) &","& GUICtrlRead($Input_11) &","& GUICtrlRead($Input_17))
+GUISetState(@SW_HIDE, $Form4)
+;~     MsgBox(262208, "Great...", "Customer Updated...   ", 1)
+EndFunc
+
+Func __SetPasswordChar($hWnd,$hCtrl,$iToggleState,$sPassChar)
+    If Not IsHWnd($hWnd) Then
+        $hWnd = WinGetHandle($hWnd)
+    EndIf
+    If Not IsHWnd($hCtrl) Then
+        $hCtrl = ControlGetHandle($hWnd, "", $hCtrl)
+    EndIf
+    Local Const $EM_SETPASSWORDCHAR = 0xCC
+    Local Const $EM_GETPASSWORDCHAR = 0xD2
+    Local $iGet_Pass_Char, $iSet_Pass_Char, $iDef_Pass_Char = 9679
+    Local $aRet = DllCall("user32.dll", "long", "SendMessageW", "hwnd", $hCtrl, "int", $EM_GETPASSWORDCHAR, "int", 0, "int", 0)
+    If Not @error And $aRet[0] Then
+        $iGet_Pass_Char = $aRet[0]
+    EndIf
+    If $sPassChar = -1 Then
+        $iSet_Pass_Char = $iGet_Pass_Char
+    Else
+        If StringLen($sPassChar) = 1 And IsString($sPassChar) Then
+            $iSet_Pass_Char = Asc($sPassChar)
+        Else
+            $iSet_Pass_Char = Number($sPassChar)
+        EndIf
+        $iDef_Pass_Char = $iSet_Pass_Char
+    EndIf
+    If $iToggleState = -1 Then
+        If $iGet_Pass_Char <> 0 Then
+            $iSet_Pass_Char = 0
+        Else
+            $iSet_Pass_Char = $iDef_Pass_Char
+        EndIf
+    ElseIf $iToggleState = 0 Then
+        $iSet_Pass_Char = 0
+    ElseIf $iToggleState = 1 Then
+        $iSet_Pass_Char = $iDef_Pass_Char
+    EndIf
+    DllCall("user32.dll", "none", "SendMessageW", "hwnd", $hCtrl, "int", $EM_SETPASSWORDCHAR, "int", $iSet_Pass_Char, "int", 0)
+    DllCall("user32.dll", "none", "InvalidateRect", "hwnd", $hCtrl, "ptr", 0, "int", 1)
+EndFunc
+
+
+
+
+Func Clear()
+;~ GUICtrlSetData( $Combo1, "" )
+FileDelete( @ScriptDir & "\Address.ini")
+FileWriteLine(@ScriptDir & "\Address.ini", "[Address]")
+GUICtrlSendMsg($listview, $LVM_Deleteallitems, 0, 0)
+adressbook()
+EndFunc
+
+Func RustDesk()
+ShellExecute( $Rustdesk , "--connect " & GUICtrlRead($Combo1)  )
+;~ ShellExecute( @ScriptDir & "\Bin\RustDesk.exe", "--connect " & GUICtrlRead($Combo1)  )
+
+;;;add adress book
+;~ Add_CustomerAuto()
+GUICtrlSendMsg($listview, $LVM_Deleteallitems, 0, 0)  ;;;отчищает список перед отображением
+;~ GUISetState(@SW_SHOW, $Form2)
+adressbook()
+;~ GUICtrlSetState ($Button2,$GUI_DISABLE)   ;;;выключает кнопку
+GUICtrlSetData( $Combo1, "" )
+GUICtrlSetData( $Combo2, "" )
+
+EndFunc
+
+
+Func RustDesknAutoAdd()
+ShellExecute( @ScriptDir & "\Bin\RustDesk.exe", "--connect " & GUICtrlRead($Combo1)  )
+
+
+;;;add adress book
+Add_CustomerAuto()
+GUICtrlSendMsg($listview, $LVM_Deleteallitems, 0, 0)  ;;;отчищает список перед отображением
+;~ GUISetState(@SW_SHOW, $Form2)
+adressbook()
+;~ GUICtrlSetState ($Button2,$GUI_DISABLE)   ;;;выключает кнопку
+GUICtrlSetData( $Combo1, "" )
+GUICtrlSetData( $Combo2, "" )
+
+EndFunc
