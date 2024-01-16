@@ -1,0 +1,1 @@
+C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config
